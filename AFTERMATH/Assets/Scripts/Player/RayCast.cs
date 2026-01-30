@@ -5,6 +5,7 @@ public class RayCast : MonoBehaviour
     [SerializeField] GameObject interactIndicartor;
     [SerializeField] float rayDistance = 3f;
     [SerializeField] KeyCode pickUp;
+    [SerializeField] LayerMask interactLayer;
     Interactable currentInteractable;
     Camera _camera;
     void Start()
@@ -16,7 +17,7 @@ public class RayCast : MonoBehaviour
         Ray ray = new Ray(_camera.transform.position, _camera.transform.forward);
         RaycastHit hit;
 
-        if(Physics.Raycast(ray, out hit, rayDistance) && hit.collider.GetComponent<Interactable>() != null)
+        if(Physics.Raycast(ray, out hit, rayDistance, interactLayer) && hit.collider.GetComponent<Interactable>() != null)
         {
             interactIndicartor.SetActive(true);
             if(Input.GetKeyDown(pickUp))
