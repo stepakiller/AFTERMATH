@@ -9,18 +9,39 @@ public class RayCast : MonoBehaviour
     [SerializeField] float activeAlpha = 1f;
     [SerializeField] Vector3 defaultScale = Vector3.one; 
     [SerializeField] Vector3 activeScale = new Vector3(1.2f, 1.2f, 1.2f); 
+    
+    [SerializeField] float crosshairAnimationSpeed = 15f; 
+
     [Header("Raycast Settings")]
     [SerializeField] float rayDistance = 3f;
     [SerializeField] LayerMask interactLayer;
-    [SerializeField] KeyCode pickUpKey = KeyCode.E;
 
     Camera _camera;
     bool _isLookingAtInteractable = false;
+    Interactable _currentInteractable; 
+
+    float _targetAlpha;
+    Vector3 _targetScale;
 
     void Start()
     {
         _camera = Camera.main;
-        SetCrosshairVisuals(defaultAlpha, defaultScale); 
+        _targetAlpha = defaultAlpha;
+        _targetScale = defaultScale;
+        
+        if (crosshairImage != null)
+        {
+            Color c = crosshairImage.color;
+            c.a = _targetAlpha;
+            crosshairImage.color = c;
+            crosshairImage.rectTransform.localScale = _targetScale;
+        }
+        InputManager.Instance.OnInteractPressed += TryInteract;
+    }
+
+    void OnDestroy()
+    {
+        if (InputManager.Instance != null) InputManager.Instance.OnInteractPressed -= TryInteract;
     }
 
     void Update()
@@ -29,31 +50,43 @@ public class RayCast : MonoBehaviour
         
         if (Physics.Raycast(ray, out RaycastHit hit, rayDistance, interactLayer) && hit.collider.TryGetComponent(out Interactable interactable))
         {
+            _currentInteractable = interactable;
             if (!_isLookingAtInteractable)
             {
-                SetCrosshairVisuals(activeAlpha, activeScale);
+                SetCrosshairTargets(activeAlpha, activeScale);
                 _isLookingAtInteractable = true;
             }
-            if (Input.GetKeyDown(pickUpKey)) interactable.Interact();
         }
         else
         {
+            _currentInteractable = null;
             if (_isLookingAtInteractable)
             {
-                SetCrosshairVisuals(defaultAlpha, defaultScale);
+                SetCrosshairTargets(defaultAlpha, defaultScale);
                 _isLookingAtInteractable = false;
             }
         }
+        
+        AnimateCrosshair();
     }
 
-    void SetCrosshairVisuals(float alpha, Vector3 targetScale)
+    void TryInteract()
     {
-        if (crosshairImage != null)
-        {
-            Color crosshairColor = crosshairImage.color;
-            crosshairColor.a = alpha;
-            crosshairImage.color = crosshairColor;
-            crosshairImage.rectTransform.localScale = targetScale;
-        }
+        if (_currentInteractable != null)  _currentInteractable.Interact();
+    }
+
+    void SetCrosshairTargets(float alpha, Vector3 targetScale)
+    {
+        _targetAlpha = alpha;
+        _targetScale = targetScale;
+    }
+
+    void AnimateCrosshair()
+    {
+        if (crosshairImage == null) return;
+        crosshairImage.rectTransform.localScale = Vector3.Lerp(crosshairImage.rectTransform.localScale, _targetScale, Time.deltaTime * crosshairAnimationSpeed);
+        Color currentColor = crosshairImage.color;
+        currentColor.a = Mathf.Lerp(currentColor.a, _targetAlpha, Time.deltaTime * crosshairAnimationSpeed);
+        crosshairImage.color = currentColor;
     }
 }

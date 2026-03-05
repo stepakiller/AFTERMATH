@@ -4,18 +4,19 @@ using System.Collections;
 public class PlayerMove : MonoBehaviour
 {
     [Header("Настройки движения")]
-    [SerializeField] float walkSpeed;
-    [SerializeField] float runSpeed;
-    [SerializeField] float jumpHeight;
-    [SerializeField] float gravity;
+    [SerializeField] float walkSpeed = 5f;
+    [SerializeField] float runSpeed = 8f;
+    [SerializeField] float jumpHeight = 2f;
+    [SerializeField] float gravity = -9.81f;
+    [SerializeField, Range(0.01f, 0.5f)] float inputSmoothTime = 0.1f; 
 
     [Header("Настройки приседания")]
-    [SerializeField] float standingHeight;
-    [SerializeField] float crouchingHeight;
-    [SerializeField] float crouchSpeed;
+    [SerializeField] float standingHeight = 2f;
+    [SerializeField] float crouchingHeight = 1f;
+    [SerializeField] float crouchSpeed = 10f;
     [SerializeField] Transform cameraTransform;
     [SerializeField] LayerMask obstacleMask; 
-    [SerializeField] float checkRadius;
+    [SerializeField] float checkRadius = 0.4f;
 
     CharacterController controller;
     Vector3 velocity;
@@ -23,12 +24,22 @@ public class PlayerMove : MonoBehaviour
     bool isCrouching;
     float currentHeight;
 
+    Vector2 currentMoveInput; 
+    Vector2 moveInputVelocity;
+
+    void Awake() => controller = GetComponent<CharacterController>();
+
     void Start()
     {
-        controller = GetComponent<CharacterController>();
         currentHeight = standingHeight;
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
+        InputManager.Instance.OnJumpPressed += TryJump;
+    }
+
+    void OnDestroy()
+    {
+        InputManager.Instance.OnJumpPressed -= TryJump;
     }
 
     void Update()
@@ -36,10 +47,9 @@ public class PlayerMove : MonoBehaviour
         isGrounded = controller.isGrounded;
         if (isGrounded && velocity.y < 0) velocity.y = -2f;
 
-        HandleCrouchInput();
+        HandleCrouchLogic();
         ApplyCrouchLerp();
         HandleMovement();
-        HandleJump();
 
         velocity.y += gravity * Time.deltaTime;
         controller.Move(velocity * Time.deltaTime);
@@ -47,24 +57,28 @@ public class PlayerMove : MonoBehaviour
 
     void HandleMovement()
     {
-        float x = Input.GetAxis("Horizontal");
-        float z = Input.GetAxis("Vertical");
+        Vector2 input = InputManager.Instance != null ? InputManager.Instance.MoveInput : Vector2.zero;
+        bool isSprinting = InputManager.Instance != null && InputManager.Instance.IsSprinting;
 
-        float currentSpeed = isCrouching ? walkSpeed * 0.5f : (Input.GetKey(KeyCode.LeftShift) ? runSpeed : walkSpeed);
-
-        Vector3 move = transform.right * x + transform.forward * z;
+        currentMoveInput = Vector2.SmoothDamp(currentMoveInput, input, ref moveInputVelocity, inputSmoothTime);
+        
+        float currentSpeed = isCrouching ? walkSpeed * 0.5f : (isSprinting ? runSpeed : walkSpeed);
+        
+        Vector3 move = transform.right * currentMoveInput.x + transform.forward * currentMoveInput.y;
+        
         if (move.magnitude > 1) move.Normalize();
         controller.Move(move * currentSpeed * Time.deltaTime);
     }
 
-    void HandleJump()
+    void TryJump()
     {
-        if (Input.GetButtonDown("Jump") && isGrounded && !isCrouching && CanStandUp()) velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
+        if (isGrounded && !isCrouching && CanStandUp()) velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
     }
 
-    void HandleCrouchInput()
+    void HandleCrouchLogic()
     {
-        if (Input.GetKey(KeyCode.LeftControl)) isCrouching = true;
+        bool isCrouchPressed = InputManager.Instance != null && InputManager.Instance.IsCrouching;
+        if (isCrouchPressed) isCrouching = true;
         else if (CanStandUp()) isCrouching = false;
     }
 

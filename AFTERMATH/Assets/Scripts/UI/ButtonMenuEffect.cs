@@ -34,7 +34,7 @@ public class ButtonMenuEffect : MonoBehaviour, IPointerEnterHandler, IPointerExi
 
         while (elapsed < animDuration)
         {
-            elapsed += Time.deltaTime;
+            elapsed += Time.unscaledDeltaTime;
             float percent = elapsed / animDuration;
             buttonText.color = Color.Lerp(startColor, targetColor, percent);
             yield return null;

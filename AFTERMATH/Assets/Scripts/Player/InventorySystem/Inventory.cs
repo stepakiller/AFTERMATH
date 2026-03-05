@@ -10,7 +10,6 @@ public class Inventory : MonoBehaviour
     [SerializeField] float smoothSpeed = 15f;
     
     [Header("Настройки выброса")]
-    [SerializeField] KeyCode dropKey = KeyCode.Q;
     [SerializeField] Transform dropPoint;
     [SerializeField] float dropForce = 5f;
 
@@ -18,14 +17,15 @@ public class Inventory : MonoBehaviour
     Collider currentCollider;
     Rigidbody rb;
 
+    void Start() => InputManager.Instance.OnDropPressed += HandleDropInput;
+
+    void OnDestroy()
+    {
+        if (InputManager.Instance != null) InputManager.Instance.OnDropPressed -= HandleDropInput;
+    }
+
     void Update()
     {
-        if (Input.GetKeyDown(dropKey) && CurrentObject != null)
-        {
-            DropObject();
-            Bootstrapper.HotbarManager.RemoveCurrentItem();
-        }
-
         if (CurrentObject != null && currentSettings != null)
         {
             Vector3 targetPos = holdPivot.TransformPoint(currentSettings.HoldPositionOffset);
@@ -39,6 +39,15 @@ public class Inventory : MonoBehaviour
         }
     }
 
+    void HandleDropInput()
+    {
+        if (CurrentObject != null)
+        {
+            DropObject();
+            Bootstrapper.HotbarManager.RemoveCurrentItem();
+        }
+    }
+
     public void TakeObject(GameObject obj)
     {
         CurrentObject = obj;
@@ -46,15 +55,15 @@ public class Inventory : MonoBehaviour
         currentSettings = CurrentObject.GetComponent<ItemSettings>();
 
         if (CurrentObject.TryGetComponent(out Equippable equippable)) equippable.Equip();
-
         originalScale = CurrentObject.transform.localScale;
-        
+    
         rb = CurrentObject.GetComponent<Rigidbody>();
         rb.isKinematic = false;
         rb.linearVelocity = Vector3.zero;
         rb.angularVelocity = Vector3.zero;
         rb.useGravity = false;
         rb.isKinematic = true;
+        
         currentCollider = CurrentObject.GetComponent<Collider>();
         currentCollider.enabled = false;
     }
@@ -62,9 +71,7 @@ public class Inventory : MonoBehaviour
     public void HideObjectInPocket()
     {
         if (CurrentObject == null) return;
-        
         if (CurrentObject.TryGetComponent(out Equippable equippable)) equippable.Unequip();
-        
         CurrentObject.SetActive(false);
         CurrentObject = null;
         currentSettings = null;
