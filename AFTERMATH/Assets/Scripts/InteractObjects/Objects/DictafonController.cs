@@ -1,5 +1,6 @@
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using System.Collections;
 public class DictafonController : MonoBehaviour, Equippable
 {
@@ -25,26 +26,26 @@ public class DictafonController : MonoBehaviour, Equippable
         {
             emissiveColorID = Shader.PropertyToID("_EmissiveColor");
             targetMaterial.EnableKeyword("_EMISSION");
+
+            UpdateEmissionColor(false);
         }
     }
 
-    void Update()
+    void UpdateEmissionColor(bool isActive)
     {
-        float intensity = isListening ? onIntensity : offIntensity;
-
+        float intensity = isActive ? onIntensity : offIntensity;
         targetMaterial.SetColor(emissiveColorID, capturedBaseColor * intensity);
+    }
 
-        if (!isEquipped) return;
+    void OnDictaphonePlay()
+    {
+        if (!isListening) OnListen();
+        else if (isPaused) TogglePause();
+    }
 
-        if (Input.GetKeyDown(KeyCode.Mouse4))
-        {
-            if (!isListening) OnListen();
-            else if (isPaused) TogglePause();
-        }
-        if (Input.GetKeyDown(KeyCode.Mouse3) && isListening)
-        {
-            TogglePause();
-        }
+    void OnDictaphonePause()
+    {
+        if (isListening) TogglePause();
     }
 
     void OnListen()
@@ -54,6 +55,7 @@ public class DictafonController : MonoBehaviour, Equippable
         GearsAnimator[1].speed = 1;
         audioSource.Play();
         isListening = true;
+        UpdateEmissionColor(true);
         StartCoroutine(WaitForSoundEnd());
     }
 
@@ -87,6 +89,8 @@ public class DictafonController : MonoBehaviour, Equippable
         SetGearsSpeed(0);
         isListening = false;
         isPaused = false;
+
+        UpdateEmissionColor(false);
     }
 
     void SetGearsSpeed(float speed)
@@ -97,7 +101,26 @@ public class DictafonController : MonoBehaviour, Equippable
         }
     }
 
-    public void Equip() => isEquipped = true; 
+    public void Equip() 
+    {
+        isEquipped = true;
+        InputManager.Instance.OnDictaphonePlayUsePressed += OnDictaphonePlay;
+        InputManager.Instance.OnDictaphonePauseUsePressed += OnDictaphonePause;
+    } 
 
-    public void Unequip() => isEquipped = false;
+    public void Unequip() 
+    {
+        isEquipped = false;
+        InputManager.Instance.OnDictaphonePlayUsePressed -= OnDictaphonePlay;
+        InputManager.Instance.OnDictaphonePauseUsePressed -= OnDictaphonePause;
+    }
+
+    void OnDisable()
+    {
+        if (isEquipped && InputManager.Instance != null)
+        {
+            InputManager.Instance.OnDictaphonePlayUsePressed -= OnDictaphonePlay;
+            InputManager.Instance.OnDictaphonePauseUsePressed -= OnDictaphonePause;
+        }
+    }
 }

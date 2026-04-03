@@ -2,16 +2,12 @@ using UnityEngine;
 
 public class PlayerCamera : MonoBehaviour
 {
-    [Header("Настройки мыши")]
-    [SerializeField] float mouseSensitivity = 1f;
-    
-    [Header("Настройки геймпада")]
-    [SerializeField] float gamepadSensitivity = 150f;
+    [Range(0.01f, 0.5f)] [SerializeField] float smoothTime; 
+    [SerializeField] float minVerticalAngle = -90f;
+    [SerializeField] float maxVerticalAngle = 90f;
 
-    [Header("Общие настройки")]
-    [Range(0.01f, 0.5f)] [SerializeField] float smoothTime = 0.05f; 
-    [SerializeField] float minVerticalAngle = -80f;
-    [SerializeField] float maxVerticalAngle = 80f;
+    const float MOUSE_MULTIPLIER = 0.10f; 
+    const float GAMEPAD_MULTIPLIER = 10f;
 
     float xRotation = 0f;
     float yRotation = 0f;
@@ -24,7 +20,6 @@ public class PlayerCamera : MonoBehaviour
     void Start()
     {
         playerBody = transform.parent;
-        
         yRotation = playerBody.eulerAngles.y;
         currentYRotation = yRotation;
     }
@@ -41,13 +36,13 @@ public class PlayerCamera : MonoBehaviour
 
         if (isMouse)
         {
-            lookX = lookInput.x * mouseSensitivity;
-            lookY = lookInput.y * mouseSensitivity;
+            lookX = lookInput.x * InputManager.Instance.MouseSensitivity * MOUSE_MULTIPLIER;
+            lookY = lookInput.y * InputManager.Instance.MouseSensitivity * MOUSE_MULTIPLIER;
         }
         else
         {
-            lookX = lookInput.x * gamepadSensitivity * Time.deltaTime;
-            lookY = lookInput.y * gamepadSensitivity * Time.deltaTime;
+            lookX = lookInput.x * InputManager.Instance.GamepadSensitivity * GAMEPAD_MULTIPLIER * Time.deltaTime;
+            lookY = lookInput.y * InputManager.Instance.GamepadSensitivity * GAMEPAD_MULTIPLIER * Time.deltaTime;
         }
 
         yRotation += lookX;

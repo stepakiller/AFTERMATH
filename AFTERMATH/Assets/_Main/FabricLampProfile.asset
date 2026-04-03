@@ -13,9 +13,9 @@ MonoBehaviour:
   m_Name: FabricLampProfile
   m_EditorClassIdentifier: Unity.RenderPipelines.HighDefinition.Runtime::UnityEngine.Rendering.HighDefinition.DiffusionProfileSettings
   profile:
-    scatteringDistance: {r: 0.5911142, g: 0.44611117, b: 0.14910597, a: 1}
+    scatteringDistance: {r: 1, g: 1, b: 1, a: 1}
     scatteringDistanceMultiplier: 1
-    transmissionTint: {r: 1, g: 0.82200265, b: 0.43921566, a: 1}
+    transmissionTint: {r: 1, g: 1, b: 1, a: 1}
     texturingMode: 0
     smoothnessMultipliers: {x: 1, y: 1}
     lobeMix: 0.5

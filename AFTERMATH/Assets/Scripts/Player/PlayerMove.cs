@@ -32,8 +32,6 @@ public class PlayerMove : MonoBehaviour
     void Start()
     {
         currentHeight = standingHeight;
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
         InputManager.Instance.OnJumpPressed += TryJump;
     }
 

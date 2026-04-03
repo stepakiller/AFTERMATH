@@ -4,7 +4,9 @@ using DG.Tweening;
 
 public class PauseController : MonoBehaviour
 {
-    [SerializeField] GameObject pauseScreen; 
+    [SerializeField] GameObject pauseScreen;
+    [SerializeField] GameObject ui;  
+    [SerializeField] SettingsButton settingsButton;
     [SerializeField] CanvasGroup canvasGroup;
     [SerializeField] Volume globalVolume;
     [SerializeField] Volume pauseVolume;
@@ -51,6 +53,7 @@ public class PauseController : MonoBehaviour
     {
         Time.timeScale = 0f;
         pauseScreen.SetActive(true);
+        ui.SetActive(false);
         canvasGroup.alpha = 0f;
         canvasGroup.DOFade(1f, fadeDuration).SetUpdate(true);
 
@@ -70,6 +73,11 @@ public class PauseController : MonoBehaviour
 
     public void ResumeGame()
     {
+        if (settingsButton.settingsIsOpen) 
+        { 
+            settingsButton.CloseSettings();
+            return; 
+        }
         canvasGroup.interactable = false;
         canvasGroup.blocksRaycasts = false;
 
@@ -82,6 +90,7 @@ public class PauseController : MonoBehaviour
         canvasGroup.DOFade(0f, fadeDuration).SetUpdate(true).OnComplete(() => 
         {
             pauseScreen.SetActive(false); 
+            ui.SetActive(true);
             Time.timeScale = 1f;            
         });
 

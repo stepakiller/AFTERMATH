@@ -27,7 +27,8 @@ public class CameraShaking : MonoBehaviour
     float currentLandOffset = 0f;
     float targetLandOffset = 0f; 
     bool wasGrounded;
-    Vector3 lastPosition; 
+    Vector3 lastPosition;
+    bool wasTimeFrozen;
 
     void Start()
     {
@@ -38,27 +39,49 @@ public class CameraShaking : MonoBehaviour
         lastPosition = controller.transform.position;
     }
 
-    void Update()
+    void LateUpdate()
     {
+        float dt = Time.deltaTime;
+        if (Time.timeScale <= 0f || dt <= 0f)
+        {
+            wasTimeFrozen = true;
+            return;
+        }
+
+        if (wasTimeFrozen)
+        {
+            wasTimeFrozen = false;
+            wasGrounded = controller.isGrounded;
+            targetLandOffset = 0f;
+            currentLandOffset = 0f;
+            lastPosition = controller.transform.position;
+            HandleBobbing();
+            return;
+        }
+
         HandleLanding();
         HandleBobbing();
     }
 
     void HandleLanding()
     {
-        if (!wasGrounded && controller.isGrounded) targetLandOffset = landDipAmount;
+        float dt = Time.deltaTime;
+        if (!wasGrounded && controller.isGrounded && dt > 1e-5f) targetLandOffset = landDipAmount;
         wasGrounded = controller.isGrounded;
 
         if (targetLandOffset > 0)
         {
-            currentLandOffset = Mathf.Lerp(currentLandOffset, targetLandOffset, Time.deltaTime * landEntrySpeed);
+            currentLandOffset = Mathf.Lerp(currentLandOffset, targetLandOffset, dt * landEntrySpeed);
             if (Mathf.Abs(currentLandOffset - targetLandOffset) < 0.05f) targetLandOffset = 0;
         }
-        else currentLandOffset = Mathf.Lerp(currentLandOffset, 0, Time.deltaTime * landReturnSpeed);
+        else currentLandOffset = Mathf.Lerp(currentLandOffset, 0, dt * landReturnSpeed);
     }
 
     void HandleBobbing()
     {
+        float dt = Time.deltaTime;
+        if (dt <= 0f) return;
+
         float targetPosX = 0;
         float targetPosY = defaultPosY;
         float targetRotX = 0;
@@ -67,15 +90,15 @@ public class CameraShaking : MonoBehaviour
         Vector3 currentPos = controller.transform.position;
         Vector3 horizontalPos = new Vector3(currentPos.x, 0, currentPos.z);
         Vector3 horizontalLastPos = new Vector3(lastPosition.x, 0, lastPosition.z);
-        
-        float speed = Vector3.Distance(horizontalPos, horizontalLastPos) / Time.deltaTime;
+
+        float speed = Vector3.Distance(horizontalPos, horizontalLastPos) / dt;
         lastPosition = currentPos;
 
         if (speed > 0.1f && controller.isGrounded)
         {
             float waveSpeed = walkingBobbingSpeed;
             float waveAmount = bobbingAmount;
-            
+
             float rotMultX = bobbingRotX;
             float rotMultY = bobbingRotY;
 
@@ -86,13 +109,13 @@ public class CameraShaking : MonoBehaviour
                 rotMultX *= runningRotFactor;
                 rotMultY *= runningRotFactor;
             }
-            timer += Time.deltaTime * waveSpeed;
+            timer += dt * waveSpeed;
             targetPosX = Mathf.Cos(timer / 2) * waveAmount;
             targetPosY = defaultPosY + Mathf.Sin(timer) * waveAmount;
             targetRotX = Mathf.Sin(timer) * rotMultX;
             targetRotY = Mathf.Cos(timer / 2) * rotMultY;
         }
-        else 
+        else
         {
             timer = 0;
             targetPosX = 0;
@@ -101,10 +124,10 @@ public class CameraShaking : MonoBehaviour
             targetRotY = 0;
         }
         Vector3 bobbingPos = new Vector3(targetPosX, targetPosY, 0);
-        targetPos = Vector3.Lerp(targetPos, bobbingPos, Time.deltaTime * transitionSpeed);
+        targetPos = Vector3.Lerp(targetPos, bobbingPos, dt * transitionSpeed);
         transform.localPosition = new Vector3(targetPos.x, targetPos.y - currentLandOffset, targetPos.z);
         Quaternion bobbingRot = Quaternion.Euler(targetRotX, targetRotY, 0);
-        targetRot = Quaternion.Slerp(targetRot, bobbingRot, Time.deltaTime * transitionSpeed);
+        targetRot = Quaternion.Slerp(targetRot, bobbingRot, dt * transitionSpeed);
         transform.localRotation = targetRot;
     }
 }
