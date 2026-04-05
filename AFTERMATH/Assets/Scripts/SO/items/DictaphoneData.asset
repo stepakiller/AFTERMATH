@@ -14,4 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ItemData
   id: 
   itemName: Dictophone
-  icon: {fileID: 21300000, guid: f4c060056e4309b439d1ba566c10dc76, type: 3}
+  icon: {fileID: 21300000, guid: 2780f9ec22de99446a25432344d85c46, type: 3}
+  prefab: {fileID: 2066044600787092164, guid: 0767aef0bb2723543bd9b688e0944878, type: 3}
+  inspectScaleMultiplier: 0.9

@@ -7,4 +7,5 @@ public class ItemData : ScriptableObject
     public string itemName;
     public Sprite icon;
     public GameObject prefab;
+    public float inspectScaleMultiplier = 1f;
 }

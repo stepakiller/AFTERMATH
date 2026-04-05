@@ -3,6 +3,7 @@ using UnityEngine.InputSystem;
 using TMPro; 
 using UnityEngine.UI;
 using System;
+using System.Collections.Generic;
 
 public class RebindButton : MonoBehaviour
 {
@@ -12,6 +13,7 @@ public class RebindButton : MonoBehaviour
     [SerializeField] string actionName = "Jump";      
     [SerializeField] int bindingIndex = 0; 
     [SerializeField] string controlScheme = "KeyboardMouse";
+    [SerializeField] string[] secondaryActions; 
 
     InputAction actionToRebind;
     InputActionRebindingExtensions.RebindingOperation rebindingOperation;
@@ -28,7 +30,6 @@ public class RebindButton : MonoBehaviour
     }
 
     void OnEnable() => OnAnyBindingChanged += UpdateUI;
-
     void OnDisable() => OnAnyBindingChanged -= UpdateUI;
 
     void StartRebinding()
@@ -36,7 +37,7 @@ public class RebindButton : MonoBehaviour
         rebindButton.interactable = false;
         bindButtonText.text = "...";
 
-        actionToRebind.Disable();
+        InputManager.Instance.InputActions.Disable();
 
         rebindingOperation = actionToRebind.PerformInteractiveRebinding(bindingIndex)
             .WithBindingGroup(controlScheme)
@@ -50,33 +51,83 @@ public class RebindButton : MonoBehaviour
 
     void RebindComplete()
     {
+        string newPath = actionToRebind.bindings[bindingIndex].effectivePath;
         rebindingOperation.Dispose();
-        ResolveDuplicates();
-        actionToRebind.Enable();
+        SyncSecondaryActions(newPath);
+        ResolveDuplicates(newPath);
+        InputManager.Instance.InputActions.Enable();
+        
         rebindButton.interactable = true;
         OnAnyBindingChanged?.Invoke();
     }
 
+    void SyncSecondaryActions(string newPath)
+    {
+        if (secondaryActions == null || InputManager.Instance?.InputActions?.asset == null) return;
+
+        foreach (string path in secondaryActions)
+        {
+            if (string.IsNullOrEmpty(path)) continue;
+
+            var secondaryAction = InputManager.Instance.InputActions.asset.FindAction(path);
+            if (secondaryAction != null)
+            {
+                bool wasUpdated = false;
+                for (int i = 0; i < secondaryAction.bindings.Count; i++)
+                {
+                    string bindingGroups = secondaryAction.bindings[i].groups ?? "";
+
+                    // Логика: 
+                    // 1. Либо схема бинда содержит "KeyboardMouse"
+                    // 2. Либо у бинда ВООБЩЕ не указана схема (пустое поле в редакторе)
+                    if (bindingGroups.Contains(controlScheme) || string.IsNullOrEmpty(bindingGroups))
+                    {
+                        secondaryAction.ApplyBindingOverride(i, newPath);
+                        wasUpdated = true;
+                    }
+                }
+
+                if (wasUpdated) 
+                    Debug.Log($"<color=green>[Успех]</color> {path} синхронизирован на {newPath}");
+                else 
+                    Debug.LogWarning($"[Внимание] {path} найден, но подходящих биндов не обнаружено.");
+            }
+        }
+    }
     void RebindCancelled()
     {
         rebindingOperation.Dispose();
-        actionToRebind.Enable();
+        InputManager.Instance.InputActions.Enable();
         rebindButton.interactable = true;
         UpdateUI();
     }
 
-    void ResolveDuplicates()
+    void ResolveDuplicates(string newBindingPath)
     {
-        string newBindingPath = actionToRebind.bindings[bindingIndex].effectivePath;
-
-        if (string.IsNullOrEmpty(newBindingPath)) return; 
+        if (string.IsNullOrEmpty(newBindingPath) || InputManager.Instance?.InputActions?.asset == null) return; 
 
         foreach (InputAction action in InputManager.Instance.InputActions.asset)
         {
+            if (action == actionToRebind) continue;
+            bool isSecondary = false;
+            if (secondaryActions != null)
+            {
+                foreach (var sPath in secondaryActions)
+                {
+                    if (string.IsNullOrEmpty(sPath)) continue;
+                    if (action.name == sPath.Split('/')[^1])
+                    {
+                        isSecondary = true;
+                        break;
+                    }
+                }
+            }
+
+            if (isSecondary) continue;
+
             for (int i = 0; i < action.bindings.Count; i++)
             {
                 InputBinding binding = action.bindings[i];
-                if (action == actionToRebind && i == bindingIndex) continue;
                 if (!string.IsNullOrEmpty(binding.effectivePath) && binding.effectivePath == newBindingPath) action.ApplyBindingOverride(i, "");
             }
         }
@@ -86,8 +137,7 @@ public class RebindButton : MonoBehaviour
     {
         if (actionToRebind == null) return;
         string displayString = InputControlPath.ToHumanReadableString(actionToRebind.bindings[bindingIndex].effectivePath, InputControlPath.HumanReadableStringOptions.OmitDevice);
-        if (string.IsNullOrEmpty(displayString)) bindButtonText.text = " ";
-        else bindButtonText.text = displayString;
+        bindButtonText.text = string.IsNullOrEmpty(displayString) ? " " : displayString;
     }
 
     void OnDestroy() => rebindButton.onClick.RemoveListener(StartRebinding);

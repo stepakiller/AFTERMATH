@@ -111,6 +111,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UI_Slot
   slotIndex: 0
+  containerType: 1
 --- !u!1 &6869899419970638265
 GameObject:
   m_ObjectHideFlags: 0
@@ -200,6 +201,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 792b1ddec5bdcdd4abad0150f2e76b0a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UI_DraggableItem
+  containerType: 0
   slotIndex: 0
 --- !u!225 &8914219799286439218
 CanvasGroup:

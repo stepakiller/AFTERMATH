@@ -16,6 +16,7 @@ public class InputManager : MonoBehaviour
     public static InputManager Instance { get; private set; }
     public PlayerControls InputActions { get; private set; }
 
+    // Данные ввода
     public Vector2 MoveInput { get; private set; }
     public Vector2 LookInput { get; private set; }
     public bool IsSprinting { get; private set; }
@@ -24,14 +25,21 @@ public class InputManager : MonoBehaviour
     public float MouseSensitivity { get; set; } = 2f;
     public float GamepadSensitivity { get; set; } = 150f;
     
+    // События для других систем
     public event Action OnJumpPressed;
     public event Action OnInteractPressed;
     public event Action OnDropPressed;
     public event Action OnPausePressed;
     public event Action OnUnpausePressed;
     public event Action OnSubmitPressed;
+    public event Action OnInventoryPressed;
+    
+    // События диктофона (Те самые, что вызвали ошибку)
     public event Action OnDictaphonePlayUsePressed;
     public event Action OnDictaphonePauseUsePressed;
+
+    // Событие хотбара
+    public event Action<int> OnHotbarSelected; 
 
     string bindsSavePath;
 
@@ -53,6 +61,7 @@ public class InputManager : MonoBehaviour
 
         LoadBindings();
 
+        // --- ПОДПИСКИ НА ВЕКТОРЫ (Выполняются постоянно) ---
         InputActions.Player.Move.performed += ctx => MoveInput = ctx.ReadValue<Vector2>();
         InputActions.Player.Move.canceled += ctx => MoveInput = Vector2.zero;
 
@@ -69,18 +78,29 @@ public class InputManager : MonoBehaviour
         InputActions.Player.Crouch.performed += ctx => IsCrouching = true;
         InputActions.Player.Crouch.canceled += ctx => IsCrouching = false;
 
-        InputActions.Player.Jump.performed += ctx => OnJumpPressed?.Invoke();
-        InputActions.Player.Interact.performed += ctx => OnInteractPressed?.Invoke();
+        // --- ПОДПИСКИ НА КНОПКИ (Событийная модель) ---
+        InputActions.Player.Jump.performed += _ => OnJumpPressed?.Invoke();
+        InputActions.Player.Interact.performed += _ => OnInteractPressed?.Invoke();
+        InputActions.Player.Drop.performed += _ => OnDropPressed?.Invoke();
+        InputActions.Player.Pause.performed += _ => OnPausePressed?.Invoke();
+        InputActions.Player.Inventory.performed += _ => OnInventoryPressed?.Invoke();
         
-        InputActions.Player.Drop.performed += ctx => OnDropPressed?.Invoke();
-        InputActions.Player.Pause.performed += ctx => OnPausePressed?.Invoke();
+        // UI
+        InputActions.UI.UnPause.performed += _ => OnUnpausePressed?.Invoke();
+        InputActions.UI.Submit.performed += _ => OnSubmitPressed?.Invoke();
+        InputActions.UI.InventoryClose.performed += _ => OnInventoryPressed?.Invoke();
 
-        InputActions.UI.UnPause.performed += ctx => OnUnpausePressed?.Invoke();
-        InputActions.UI.Submit.performed += ctx => OnSubmitPressed?.Invoke();
+        // Диктофон
+        InputActions.Player.DictaphonePlay.performed += _ => OnDictaphonePlayUsePressed?.Invoke();
+        InputActions.Player.DictaphonePause.performed += _ => OnDictaphonePauseUsePressed?.Invoke();
 
-        InputActions.Player.DictaphonePlay.performed += ctx => OnDictaphonePlayUsePressed?.Invoke();
-        InputActions.Player.DictaphonePause.performed += ctx => OnDictaphonePauseUsePressed?.Invoke();
+        // Хотбар
+        InputActions.Player.Hotbar1.performed += _ => OnHotbarSelected?.Invoke(0);
+        InputActions.Player.Hotbar2.performed += _ => OnHotbarSelected?.Invoke(1);
+        InputActions.Player.Hotbar3.performed += _ => OnHotbarSelected?.Invoke(2);
     }
+
+    // --- УПРАВЛЕНИЕ РЕЖИМАМИ ---
 
     public void EnablePlayerInput()
     {
@@ -94,11 +114,10 @@ public class InputManager : MonoBehaviour
         InputActions.UI.Enable();
     }
 
-    void OnEnable()
-    {
-        if (InputActions != null) EnablePlayerInput();
-    }
+    void OnEnable() { if (InputActions != null) EnablePlayerInput(); }
     void OnDisable() => InputActions?.Disable();
+
+    // --- СОХРАНЕНИЕ / ЗАГРУЗКА ---
 
     public async void SaveBindings()
     {
@@ -123,7 +142,8 @@ public class InputManager : MonoBehaviour
             {
                 MouseSensitivity = data.mouseSensitivity;
                 GamepadSensitivity = data.gamepadSensitivity;
-                if (!string.IsNullOrEmpty(data.bindings)) InputActions.LoadBindingOverridesFromJson(data.bindings);
+                if (!string.IsNullOrEmpty(data.bindings)) 
+                    InputActions.LoadBindingOverridesFromJson(data.bindings);
             }
         }
     }
@@ -131,7 +151,7 @@ public class InputManager : MonoBehaviour
     public void ResetBindings()
     {
         InputActions.RemoveAllBindingOverrides();
-        MouseSensitivity = 1f;
+        MouseSensitivity = 2f;
         GamepadSensitivity = 150f;
         SaveBindings();
     }

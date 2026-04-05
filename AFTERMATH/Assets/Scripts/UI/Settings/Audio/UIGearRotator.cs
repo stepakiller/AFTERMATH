@@ -17,16 +17,16 @@ public class UIGearRotator : MonoBehaviour
     void StartSpinning()
     {
         _rotationTween?.Kill();
-        _rotationTween = _rectTransform.DORotate(new Vector3(0, 0, -360), _duration, _rotateMode)
+        _rectTransform.localEulerAngles = new Vector3(0, 0, _rectTransform.localEulerAngles.z);
+        _rotationTween = _rectTransform.DOLocalRotate(new Vector3(0, 0, -360), _duration, RotateMode.LocalAxisAdd)
             .SetEase(_easeType)
             .SetLoops(-1, LoopType.Incremental)
-            .SetRelative()
-            .SetUpdate(true);
+            .SetUpdate(true); 
     }
 
     void OnEnable()
     {
-        if (_rotationTween == null || !_rotationTween.IsActive())  StartSpinning();
+        if (_rotationTween == null || !_rotationTween.IsActive()) StartSpinning();
         else _rotationTween.Play();
     }
 

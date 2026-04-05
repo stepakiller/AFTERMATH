@@ -1,23 +1,34 @@
 using UnityEngine;
+using System.Collections.Generic;
 using System;
 
 public class HotbarManager : MonoBehaviour
 {
     [SerializeField] int slotCount = 3;
-    public GameObject[] slots;
+    public ItemSettings[] slots;
+    public List<ItemSettings> radialItems = new List<ItemSettings>(); 
+
     public int currentSelectedIndex { get; private set; } = 0;
-
     public event Action OnInventoryChanged;
-    void Awake() => slots = new GameObject[slotCount];
 
-    void Start() => SelectSlot(0);
-
-    void Update()
+    void Awake() 
     {
-        for (int i = 0; i < slotCount; i++)if (Input.GetKeyDown(KeyCode.Alpha1 + i)) SelectSlot(i);
+        Bootstrapper.HotbarManager = this;
+        slots = new ItemSettings[slotCount];
     }
 
-    public void PickupItem(GameObject item)
+    void Start() 
+    {
+        InputManager.Instance.OnHotbarSelected += SelectSlot;
+        SelectSlot(0);
+    }
+
+    void OnDestroy()
+    {
+        if (InputManager.Instance != null) InputManager.Instance.OnHotbarSelected -= SelectSlot;
+    }
+
+    public void PickupItem(ItemSettings item)
     {
         for (int i = 0; i < slots.Length; i++)
         {
@@ -25,32 +36,54 @@ public class HotbarManager : MonoBehaviour
             {
                 slots[i] = item;
                 if (i == currentSelectedIndex) Bootstrapper.Inventory.TakeObject(item);
-                else item.SetActive(false);
+                else item.gameObject.SetActive(false);
                 OnInventoryChanged?.Invoke();
                 return;
             }
         }
+        
+        radialItems.Add(item);
+        item.gameObject.SetActive(false);
+        OnInventoryChanged?.Invoke();
+    }
+
+    public void MoveItem(ItemContainer fromContainer, int fromIndex, ItemContainer toContainer, int toIndex)
+    {
+        ItemSettings draggedItem = (fromContainer == ItemContainer.Hotbar) ? slots[fromIndex] : radialItems[fromIndex];
+        if (draggedItem == null) return; 
+
+        ItemSettings targetItem = null;
+        if (toContainer == ItemContainer.Hotbar) targetItem = slots[toIndex];
+        else if (toIndex < radialItems.Count) targetItem = radialItems[toIndex];
+
+        if (fromContainer == ItemContainer.Hotbar) slots[fromIndex] = targetItem;
+        else
+        {
+            if (targetItem == null) radialItems.RemoveAt(fromIndex);
+            else radialItems[fromIndex] = targetItem;
+        }
+
+        if (toContainer == ItemContainer.Hotbar) slots[toIndex] = draggedItem;
+        else
+        {
+            if (targetItem == null) radialItems.Add(draggedItem);
+            else radialItems[toIndex] = draggedItem;
+        }
+
+        SelectSlot(currentSelectedIndex); 
+        OnInventoryChanged?.Invoke();     
     }
 
     public void SelectSlot(int index)
     {
-        if (index < 0 || index >= slotCount) return;
-        if (index == currentSelectedIndex && Bootstrapper.Inventory.CurrentObject != null) return; 
+        if (index < 0 || index >= slotCount || Time.timeScale == 0) return; // Игнорируем на паузе
+        if (index == currentSelectedIndex && slots[index] == Bootstrapper.Inventory.CurrentItem) return; 
 
         currentSelectedIndex = index;
         Bootstrapper.Inventory.HideObjectInPocket();
 
-        GameObject selectedItem = slots[currentSelectedIndex];
+        ItemSettings selectedItem = slots[currentSelectedIndex];
         if (selectedItem != null) Bootstrapper.Inventory.TakeObject(selectedItem);
-        OnInventoryChanged?.Invoke();
-    }
-
-    public void SwapItems(int indexA, int indexB)
-    {
-        GameObject temp = slots[indexA];
-        slots[indexA] = slots[indexB];
-        slots[indexB] = temp;
-        SelectSlot(currentSelectedIndex);
         OnInventoryChanged?.Invoke();
     }
 
@@ -60,3 +93,5 @@ public class HotbarManager : MonoBehaviour
         OnInventoryChanged?.Invoke();
     }
 }
+
+public enum ItemContainer { Hotbar, Radial }

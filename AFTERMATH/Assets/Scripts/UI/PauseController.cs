@@ -4,17 +4,26 @@ using DG.Tweening;
 
 public class PauseController : MonoBehaviour
 {
+    [Header("UI Elements")]
     [SerializeField] GameObject pauseScreen;
-    [SerializeField] GameObject ui;  
-    [SerializeField] SettingsButton settingsButton;
     [SerializeField] CanvasGroup canvasGroup;
+    
+    [Header("Crosshair")]
+    [SerializeField] GameObject crosshair;  
+    [SerializeField] CanvasGroup crosshairCanvasGroup;
+    [SerializeField] float crosshairFadeDuration = 0.2f;
+
+    [Header("Settings")]
+    [SerializeField] SettingsButton settingsButton;
+    [SerializeField] float fadeDuration = 0.3f;
+
+    [Header("Volumes & Effects")]
     [SerializeField] Volume globalVolume;
+    [SerializeField] float globalVolumeTargetWeight = 0.2f;
     [SerializeField] Volume pauseVolume;
     [SerializeField] Material blurMaterial;
     [SerializeField] float targetBlurValue = 2f;
-    [SerializeField] float fadeDuration = 0.3f;
-    [SerializeField] float globalVolumeTargetWeight;
-    string blurParameterName = "_Blur";
+    readonly int blurPropertyId = Shader.PropertyToID("_Blur");
 
     void Awake()
     {
@@ -46,25 +55,25 @@ public class PauseController : MonoBehaviour
         
         if (pauseVolume != null) pauseVolume.weight = 0f;
         if (globalVolume != null) globalVolume.weight = 1f;
-        if (blurMaterial != null) blurMaterial.SetFloat(blurParameterName, 0f);
+        if (blurMaterial != null) blurMaterial.SetFloat(blurPropertyId, 0f);
     }
 
     void PauseGame()
     {
+        KillAllTweens();
         Time.timeScale = 0f;
         pauseScreen.SetActive(true);
-        ui.SetActive(false);
-        canvasGroup.alpha = 0f;
-        canvasGroup.DOFade(1f, fadeDuration).SetUpdate(true);
-
-        if (blurMaterial != null)blurMaterial.DOFloat(targetBlurValue, blurParameterName, fadeDuration).SetUpdate(true);
-
-        if (pauseVolume != null) DOTween.To(() => pauseVolume.weight, x => pauseVolume.weight = x, 1f, fadeDuration).SetUpdate(true);
-        
-        if (globalVolume != null) DOTween.To(() => globalVolume.weight, x => globalVolume.weight = x, globalVolumeTargetWeight, fadeDuration).SetUpdate(true);
+        crosshair.SetActive(false);
+        if (crosshairCanvasGroup != null) crosshairCanvasGroup.alpha = 0f; 
 
         canvasGroup.interactable = true;
         canvasGroup.blocksRaycasts = true;
+        canvasGroup.alpha = 0f;
+        canvasGroup.DOFade(1f, fadeDuration).SetUpdate(true);
+
+        if (blurMaterial != null) blurMaterial.DOFloat(targetBlurValue, blurPropertyId, fadeDuration).SetUpdate(true);
+        if (pauseVolume != null) DOTween.To(() => pauseVolume.weight, x => pauseVolume.weight = x, 1f, fadeDuration).SetUpdate(true);
+        if (globalVolume != null) DOTween.To(() => globalVolume.weight, x => globalVolume.weight = x, globalVolumeTargetWeight, fadeDuration).SetUpdate(true);
 
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
@@ -78,24 +87,35 @@ public class PauseController : MonoBehaviour
             settingsButton.CloseSettings();
             return; 
         }
+        KillAllTweens();
+
         canvasGroup.interactable = false;
         canvasGroup.blocksRaycasts = false;
 
-        if (blurMaterial != null) blurMaterial.DOFloat(0f, blurParameterName, fadeDuration).SetUpdate(true);
-
+        if (blurMaterial != null) blurMaterial.DOFloat(0f, blurPropertyId, fadeDuration).SetUpdate(true);
         if (pauseVolume != null)  DOTween.To(() => pauseVolume.weight, x => pauseVolume.weight = x, 0f, fadeDuration).SetUpdate(true);
-            
         if (globalVolume != null) DOTween.To(() => globalVolume.weight, x => globalVolume.weight = x, 1f, fadeDuration).SetUpdate(true);
 
         canvasGroup.DOFade(0f, fadeDuration).SetUpdate(true).OnComplete(() => 
         {
             pauseScreen.SetActive(false); 
-            ui.SetActive(true);
             Time.timeScale = 1f;            
+            crosshair.SetActive(true);
+            if (crosshairCanvasGroup != null)
+            {
+                crosshairCanvasGroup.alpha = 0f;
+                crosshairCanvasGroup.DOFade(1f, crosshairFadeDuration); 
+            }
         });
-
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
         InputManager.Instance.EnablePlayerInput();
+    }
+
+    private void KillAllTweens()
+    {
+        DOTween.Kill(canvasGroup);
+        if (crosshairCanvasGroup != null) DOTween.Kill(crosshairCanvasGroup);
+        if (blurMaterial != null) DOTween.Kill(blurMaterial);
     }
 }

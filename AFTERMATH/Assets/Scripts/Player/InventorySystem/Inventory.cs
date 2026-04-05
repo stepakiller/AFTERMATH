@@ -2,8 +2,7 @@ using UnityEngine;
 
 public class Inventory : MonoBehaviour
 {
-    public GameObject CurrentObject { get; private set; }
-    ItemSettings currentSettings;
+    public ItemSettings CurrentItem { get; private set; } 
 
     [Header("Настройки рук")]
     [SerializeField] Transform holdPivot;
@@ -14,11 +13,10 @@ public class Inventory : MonoBehaviour
     [SerializeField] float dropForce = 5f;
 
     Vector3 originalScale;
-    Collider currentCollider;
-    Rigidbody rb;
+
+    void Awake() => Bootstrapper.Inventory = this; 
 
     void Start() => InputManager.Instance.OnDropPressed += HandleDropInput;
-
     void OnDestroy()
     {
         if (InputManager.Instance != null) InputManager.Instance.OnDropPressed -= HandleDropInput;
@@ -26,76 +24,75 @@ public class Inventory : MonoBehaviour
 
     void Update()
     {
-        if (CurrentObject != null && currentSettings != null)
+        if (CurrentItem != null)
         {
-            Vector3 targetPos = holdPivot.TransformPoint(currentSettings.HoldPositionOffset);
-            Quaternion targetRot = holdPivot.rotation * Quaternion.Euler(currentSettings.HoldRotationOffset);
+            Transform itemTransform = CurrentItem.transform;
+            Vector3 targetPos = holdPivot.TransformPoint(CurrentItem.HoldPositionOffset);
+            Quaternion targetRot = holdPivot.rotation * Quaternion.Euler(CurrentItem.HoldRotationOffset);
 
-            CurrentObject.transform.position = Vector3.Lerp(CurrentObject.transform.position, targetPos, Time.deltaTime * smoothSpeed);
-            CurrentObject.transform.rotation = Quaternion.Slerp(CurrentObject.transform.rotation, targetRot, Time.deltaTime * smoothSpeed);
-
-            Vector3 targetScale = Vector3.one * currentSettings.HandScale;
-            CurrentObject.transform.localScale = Vector3.Lerp(CurrentObject.transform.localScale, targetScale, Time.deltaTime * smoothSpeed);
+            itemTransform.position = Vector3.Lerp(itemTransform.position, targetPos, Time.deltaTime * smoothSpeed);
+            itemTransform.rotation = Quaternion.Slerp(itemTransform.rotation, targetRot, Time.deltaTime * smoothSpeed);
+            itemTransform.localScale = Vector3.Lerp(itemTransform.localScale, Vector3.one * CurrentItem.HandScale, Time.deltaTime * smoothSpeed);
         }
     }
 
     void HandleDropInput()
     {
-        if (CurrentObject != null)
+        if (CurrentItem != null)
         {
             DropObject();
             Bootstrapper.HotbarManager.RemoveCurrentItem();
         }
     }
 
-    public void TakeObject(GameObject obj)
+    public void TakeObject(ItemSettings item)
     {
-        CurrentObject = obj;
-        CurrentObject.SetActive(true);
-        currentSettings = CurrentObject.GetComponent<ItemSettings>();
-
-        if (CurrentObject.TryGetComponent(out Equippable equippable)) equippable.Equip();
-        originalScale = CurrentObject.transform.localScale;
-    
-        rb = CurrentObject.GetComponent<Rigidbody>();
-        rb.isKinematic = false;
-        rb.linearVelocity = Vector3.zero;
-        rb.angularVelocity = Vector3.zero;
-        rb.useGravity = false;
-        rb.isKinematic = true;
+        CurrentItem = item;
+        CurrentItem.gameObject.SetActive(true);
+        if (CurrentItem.EquippableComponent != null) CurrentItem.EquippableComponent.Equip();
         
-        currentCollider = CurrentObject.GetComponent<Collider>();
-        currentCollider.enabled = false;
+        originalScale = CurrentItem.transform.localScale;
+
+        // ПРОВЕРКА: Обнуляем скорость только у динамических объектов
+        // Если объект уже кинематический (например, в префабе), мы просто пропускаем этот шаг
+        if (!CurrentItem.Rb.isKinematic)
+        {
+            CurrentItem.Rb.linearVelocity = Vector3.zero;
+            CurrentItem.Rb.angularVelocity = Vector3.zero;
+        }
+
+        // Теперь спокойно "замораживаем" его для ношения в руках
+        CurrentItem.Rb.isKinematic = true;
+        CurrentItem.Rb.useGravity = false;
+        
+        CurrentItem.Col.enabled = false;
     }
 
     public void HideObjectInPocket()
     {
-        if (CurrentObject == null) return;
-        if (CurrentObject.TryGetComponent(out Equippable equippable)) equippable.Unequip();
-        CurrentObject.SetActive(false);
-        CurrentObject = null;
-        currentSettings = null;
+        if (CurrentItem == null) return;
+        if (CurrentItem.EquippableComponent != null) CurrentItem.EquippableComponent.Unequip();
+        CurrentItem.gameObject.SetActive(false);
+        CurrentItem = null;
     }
 
     public void DropObject()
     {
-        if (CurrentObject == null) return;
-        if (CurrentObject.TryGetComponent(out Equippable equippable)) equippable.Unequip();
+        if (CurrentItem == null) return;
+        if (CurrentItem.EquippableComponent != null) CurrentItem.EquippableComponent.Unequip();
 
-        CurrentObject.transform.localScale = originalScale;
-        CurrentObject.transform.position = dropPoint.position;
-        CurrentObject.transform.rotation = Quaternion.identity;
+        Transform itemTransform = CurrentItem.transform;
+        itemTransform.localScale = originalScale;
+        itemTransform.position = dropPoint.position;
+        itemTransform.rotation = Quaternion.identity;
 
-        rb.isKinematic = false;
-        rb.useGravity = true;
-        rb.linearVelocity = Vector3.zero;
-        rb.angularVelocity = Vector3.zero;
-        currentCollider.enabled = true;
+        CurrentItem.Rb.isKinematic = false;
+        CurrentItem.Rb.useGravity = true;
+        CurrentItem.Rb.linearVelocity = Vector3.zero;
+        CurrentItem.Rb.angularVelocity = Vector3.zero;
+        CurrentItem.Col.enabled = true;
 
-        Vector3 throwDirection = dropPoint.forward;
-        rb.AddForce(throwDirection * dropForce, ForceMode.Impulse);
-        
-        CurrentObject = null;
-        currentSettings = null;
+        CurrentItem.Rb.AddForce(dropPoint.forward * dropForce, ForceMode.Impulse);
+        CurrentItem = null;
     }
 }

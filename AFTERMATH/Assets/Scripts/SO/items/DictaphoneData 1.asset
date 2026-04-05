@@ -15,3 +15,5 @@ MonoBehaviour:
   id: 
   itemName: Dictophone
   icon: {fileID: 10911, guid: 0000000000000000f000000000000000, type: 0}
+  prefab: {fileID: 2066044600787092164, guid: 0767aef0bb2723543bd9b688e0944878, type: 3}
+  inspectScaleMultiplier: 0.9

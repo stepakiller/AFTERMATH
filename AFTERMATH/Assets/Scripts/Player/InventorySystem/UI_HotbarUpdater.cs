@@ -11,7 +11,10 @@ public class UI_HotbarUpdater : MonoBehaviour
         {
             uiSlots[i].slotIndex = i;
             uiItems[i].slotIndex = i;
+            uiSlots[i].containerType = ItemContainer.Hotbar;
+            uiItems[i].containerType = ItemContainer.Hotbar;
         }
+        
         Bootstrapper.HotbarManager.OnInventoryChanged += UpdateUI;
         UpdateUI(); 
     }
@@ -23,14 +26,10 @@ public class UI_HotbarUpdater : MonoBehaviour
 
     void UpdateUI()
     {
-        GameObject[] itemObjects = Bootstrapper.HotbarManager.slots;
-        for (int i = 0; i < itemObjects.Length; i++)
+        ItemSettings[] items = Bootstrapper.HotbarManager.slots;
+        for (int i = 0; i < items.Length; i++)
         {
-            if (itemObjects[i] != null)
-            {
-                ItemSettings settings = itemObjects[i].GetComponent<ItemSettings>();
-                uiItems[i].Setup(settings.ItemData, i);
-            }
+            if (items[i] != null) uiItems[i].Setup(items[i].ItemData, i);
             else uiItems[i].Setup(null, i);
         }
     }
