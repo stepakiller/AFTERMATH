@@ -27,17 +27,11 @@ public class PlayerMove : MonoBehaviour
     Vector2 currentMoveInput; 
     Vector2 moveInputVelocity;
 
-    void Awake() => controller = GetComponent<CharacterController>();
-
-    void Start()
+    void Awake()
     {
+        Bootstrapper.PlayerTransform = transform;
+        controller = GetComponent<CharacterController>();
         currentHeight = standingHeight;
-        InputManager.Instance.OnJumpPressed += TryJump;
-    }
-
-    void OnDestroy()
-    {
-        InputManager.Instance.OnJumpPressed -= TryJump;
     }
 
     void Update()
@@ -48,6 +42,7 @@ public class PlayerMove : MonoBehaviour
         HandleCrouchLogic();
         ApplyCrouchLerp();
         HandleMovement();
+        HandleJumpLogic();
 
         velocity.y += gravity * Time.deltaTime;
         controller.Move(velocity * Time.deltaTime);
@@ -68,9 +63,10 @@ public class PlayerMove : MonoBehaviour
         controller.Move(move * currentSpeed * Time.deltaTime);
     }
 
-    void TryJump()
+    void HandleJumpLogic()
     {
-        if (isGrounded && !isCrouching && CanStandUp()) velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
+        bool isJumpPressed = InputManager.Instance != null && InputManager.Instance.IsJumping;
+        if (isJumpPressed && isGrounded && !isCrouching && CanStandUp()) velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
     }
 
     void HandleCrouchLogic()

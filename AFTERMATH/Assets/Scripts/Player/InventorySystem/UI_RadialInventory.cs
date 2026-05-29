@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using DG.Tweening;
-
+using TMPro;
 public class UI_RadialInventory : MonoBehaviour
 {
     private struct SlotReference
@@ -13,25 +13,33 @@ public class UI_RadialInventory : MonoBehaviour
     }
 
     [Header("Настройки круга")]
-    public float radius = 200f;
-    public GameObject radialSlotPrefab;
-    public Transform centerPoint;
+    [SerializeField] float radius = 200f;
+    [SerializeField] GameObject radialSlotPrefab;
+    [SerializeField] Transform centerPoint;
     
     [Header("Настройки карусели")]
-    public float rotationDuration = 0.25f;
-    public Ease rotationEase = Ease.InOutQuad;
+    [SerializeField] float rotationDuration = 0.25f;
+    [SerializeField] Ease rotationEase = Ease.InOutQuad;
 
-    private List<SlotReference> spawnedSlots = new List<SlotReference>();
-    private float currentAngleOffset = 0f;
-    private float targetAngleOffset = 0f;
-    private int currentFrontIndex = 0; 
+    [Header("Осмотр")]
+    [SerializeField] UI_InspectController inspectController;
 
+    [Header("UI Текст")]
+    [SerializeField] TMP_Text itemNameText; 
+    [SerializeField] float textFadeDuration = 0.15f;
+
+    List<SlotReference> spawnedSlots = new List<SlotReference>();
+    float currentAngleOffset = 0f;
+    float targetAngleOffset = 0f;
+    int currentFrontIndex = 0; 
+
+    void Awake() => Bootstrapper.RadialInventory = this;
     void Start() => Bootstrapper.HotbarManager.OnInventoryChanged += UpdateRadialUI;
     
     void OnDestroy()
     {
-        if (Bootstrapper.HotbarManager != null) 
-            Bootstrapper.HotbarManager.OnInventoryChanged -= UpdateRadialUI;
+        if (Bootstrapper.HotbarManager != null) Bootstrapper.HotbarManager.OnInventoryChanged -= UpdateRadialUI;
+        if (Bootstrapper.RadialInventory == this) Bootstrapper.RadialInventory = null;
     }
 
     public void RotateLeft()
@@ -42,6 +50,9 @@ public class UI_RadialInventory : MonoBehaviour
         
         AnimateRotation();
         UpdateInteractability();
+
+        Bootstrapper.InspectController?.UpdateInspectButtonVisibility();
+        UpdateItemNameDisplay();
     }
 
     public void RotateRight()
@@ -52,9 +63,12 @@ public class UI_RadialInventory : MonoBehaviour
         
         AnimateRotation();
         UpdateInteractability();
+
+        Bootstrapper.InspectController?.UpdateInspectButtonVisibility();
+        UpdateItemNameDisplay();
     }
 
-    private void AnimateRotation()
+    void AnimateRotation()
     {
         DOTween.Kill(this);
         DOTween.To(() => currentAngleOffset, x => {
@@ -74,7 +88,12 @@ public class UI_RadialInventory : MonoBehaviour
         spawnedSlots.Clear();
 
         List<ItemSettings> items = Bootstrapper.HotbarManager.radialItems;
-        if (items.Count == 0) return;
+        if (items.Count == 0)
+        {
+            Bootstrapper.InspectController?.UpdateInspectButtonVisibility();
+            UpdateItemNameDisplay();
+            return;
+        }
 
         currentFrontIndex = 0;
         currentAngleOffset = 0f;
@@ -93,22 +112,23 @@ public class UI_RadialInventory : MonoBehaviour
             };
 
             UI_Slot slotLogic = obj.GetComponent<UI_Slot>();
-            if (slotLogic != null) { slotLogic.slotIndex = i; slotLogic.containerType = ItemContainer.Radial; }
+            if (slotLogic != null) { slotLogic.SlotIndex = i; slotLogic.ContainerType = ItemContainer.Radial; }
 
             if (reference.DragItem != null)
             {
-                reference.DragItem.containerType = ItemContainer.Radial;
+                reference.DragItem.ContainerType = ItemContainer.Radial;
                 reference.DragItem.Setup(items[i].ItemData, i);
             }
-
             spawnedSlots.Add(reference);
         }
 
         RefreshPositions();
         UpdateInteractability();
+        Bootstrapper.InspectController?.UpdateInspectButtonVisibility();
+        UpdateItemNameDisplay();
     }
 
-    private void RefreshPositions()
+    void RefreshPositions()
     {
         int count = spawnedSlots.Count;
         if (count == 0) return;
@@ -119,8 +139,6 @@ public class UI_RadialInventory : MonoBehaviour
         {
             float angle = (-90f + (i * angleStep) + currentAngleOffset) * Mathf.Deg2Rad;
             Vector3 pos = new Vector3(Mathf.Cos(angle), Mathf.Sin(angle), 0) * radius;
-            
-            // Используем закэшированный RectTransform
             spawnedSlots[i].Rect.localPosition = pos;
             spawnedSlots[i].Root.transform.rotation = centerPoint.parent.rotation;
         }
@@ -129,13 +147,12 @@ public class UI_RadialInventory : MonoBehaviour
         for (int i = 0; i < sorted.Count; i++) sorted[i].Root.transform.SetSiblingIndex(i);
     }
 
-    private void UpdateInteractability()
+    void UpdateInteractability()
     {
         for (int i = 0; i < spawnedSlots.Count; i++)
         {
             var slot = spawnedSlots[i];
             if (slot.Group == null) continue;
-
             bool isFront = (i == currentFrontIndex);
             slot.Group.blocksRaycasts = isFront;
             slot.Group.alpha = isFront ? 1f : 0.4f; 
@@ -148,5 +165,19 @@ public class UI_RadialInventory : MonoBehaviour
         var radialItems = Bootstrapper.HotbarManager.radialItems;
         if (radialItems.Count == 0) return null;
         return radialItems[currentFrontIndex];
+    }
+
+    void UpdateItemNameDisplay()
+    {
+        if (itemNameText == null) return;
+
+        ItemSettings currentItem = GetCurrentFrontItem();
+        string newName = (currentItem != null && currentItem.ItemData != null) ? currentItem.ItemData.ItemName : "";
+        DOTween.Kill(itemNameText);
+        itemNameText.DOFade(0f, textFadeDuration).SetUpdate(true).OnComplete(() => 
+        {
+            itemNameText.text = newName;
+            if (!string.IsNullOrEmpty(newName)) itemNameText.DOFade(1f, textFadeDuration).SetUpdate(true);
+        });
     }
 }

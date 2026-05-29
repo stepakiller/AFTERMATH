@@ -30,13 +30,26 @@ public class HotbarManager : MonoBehaviour
 
     public void PickupItem(ItemSettings item)
     {
+        if (item == null)
+        {
+            return;
+        }
+
         for (int i = 0; i < slots.Length; i++)
         {
             if (slots[i] == null)
             {
                 slots[i] = item;
-                if (i == currentSelectedIndex) Bootstrapper.Inventory.TakeObject(item);
-                else item.gameObject.SetActive(false);
+                
+                if (i == currentSelectedIndex) 
+                {
+                    if (Bootstrapper.Inventory != null) Bootstrapper.Inventory.TakeObject(item);
+                    else
+                    {
+                        Debug.LogError("HotbarManager: Bootstrapper.Inventory равен null! Предмет добавлен в слот, но не взят в руки.");
+                    }
+                }
+                else  item.gameObject.SetActive(false);
                 OnInventoryChanged?.Invoke();
                 return;
             }
@@ -76,7 +89,11 @@ public class HotbarManager : MonoBehaviour
 
     public void SelectSlot(int index)
     {
-        if (index < 0 || index >= slotCount || Time.timeScale == 0) return; // Игнорируем на паузе
+        if (index < 0 || index >= slotCount || Time.timeScale == 0) return;
+        if (Bootstrapper.Inventory == null) 
+        {
+            return;
+        }
         if (index == currentSelectedIndex && slots[index] == Bootstrapper.Inventory.CurrentItem) return; 
 
         currentSelectedIndex = index;

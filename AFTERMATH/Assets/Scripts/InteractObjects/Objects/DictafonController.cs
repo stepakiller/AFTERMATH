@@ -5,16 +5,19 @@ using System.Collections;
 public class DictafonController : MonoBehaviour, Equippable
 {
     [SerializeField] AudioSource audioSource;
+    public AudioClip audioClip;
     [SerializeField] Material targetMaterial;
     [SerializeField] Animator playButtonAnimator;
     [SerializeField] Animator pauseButtonAnimator;
     [SerializeField] Animator[] GearsAnimator;
+    [SerializeField] Door targetDoor;
     float onIntensity = 20f;
     float offIntensity = 0f;
     int emissiveColorID;
     bool isListening;
     bool isPaused;
     bool isEquipped;
+    [HideInInspector] public bool canOpenDoor = false;
     Color capturedBaseColor = new Color(0.502f, 0.000f, 0.000f, 1.000f);
 
     void Start()
@@ -39,7 +42,11 @@ public class DictafonController : MonoBehaviour, Equippable
 
     void OnDictaphonePlay()
     {
-        if (!isListening) OnListen();
+        if (!isListening)
+        {
+            OnListen();
+            if(canOpenDoor) targetDoor.OpenDoor();
+        }
         else if (isPaused) TogglePause();
     }
 
@@ -53,6 +60,7 @@ public class DictafonController : MonoBehaviour, Equippable
         playButtonAnimator.SetBool("IsPressed", true);
         GearsAnimator[0].speed = 1;
         GearsAnimator[1].speed = 1;
+        audioSource.clip = audioClip;
         audioSource.Play();
         isListening = true;
         UpdateEmissionColor(true);
@@ -103,6 +111,7 @@ public class DictafonController : MonoBehaviour, Equippable
 
     public void Equip() 
     {
+        Debug.Log("игарет");
         isEquipped = true;
         InputManager.Instance.OnDictaphonePlayUsePressed += OnDictaphonePlay;
         InputManager.Instance.OnDictaphonePauseUsePressed += OnDictaphonePause;
@@ -110,6 +119,7 @@ public class DictafonController : MonoBehaviour, Equippable
 
     public void Unequip() 
     {
+        Debug.Log("игарет");
         isEquipped = false;
         InputManager.Instance.OnDictaphonePlayUsePressed -= OnDictaphonePlay;
         InputManager.Instance.OnDictaphonePauseUsePressed -= OnDictaphonePause;

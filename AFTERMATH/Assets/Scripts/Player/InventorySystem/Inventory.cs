@@ -52,16 +52,11 @@ public class Inventory : MonoBehaviour
         if (CurrentItem.EquippableComponent != null) CurrentItem.EquippableComponent.Equip();
         
         originalScale = CurrentItem.transform.localScale;
-
-        // ПРОВЕРКА: Обнуляем скорость только у динамических объектов
-        // Если объект уже кинематический (например, в префабе), мы просто пропускаем этот шаг
         if (!CurrentItem.Rb.isKinematic)
         {
             CurrentItem.Rb.linearVelocity = Vector3.zero;
             CurrentItem.Rb.angularVelocity = Vector3.zero;
         }
-
-        // Теперь спокойно "замораживаем" его для ношения в руках
         CurrentItem.Rb.isKinematic = true;
         CurrentItem.Rb.useGravity = false;
         

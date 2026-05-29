@@ -2,12 +2,16 @@ using UnityEngine;
 using DG.Tweening;
 using UnityEngine.UI;
 using System.Collections.Generic;
+using TMPro;
 
 public class UI_InspectController : MonoBehaviour
 {
     [SerializeField] Button openInspect;
     [SerializeField] Button closeInspect;
     [SerializeField] Camera inspectCamera;
+    [Header("Тексты интерфейса")]
+    [SerializeField] TMP_Text itemNameText;
+    [SerializeField] TMP_Text itemDescriptionText;
     [Header("UI Панели (RectTransform)")]
     [SerializeField] RectTransform canvasRect;
     [SerializeField] RectTransform inventoryMenu;
@@ -18,16 +22,16 @@ public class UI_InspectController : MonoBehaviour
     [SerializeField] Ease animationEase = Ease.OutBack;
 
     [Header("Логика 3D Осмотра")]
-    [SerializeField] UI_RadialInventory radialInventory;
     [SerializeField] UI_InspectDragArea dragArea;
     [SerializeField] Transform inspectSpawnPoint;
 
-    private float centerPosX = 0f;
-    private float leftHiddenPosX;
-    private float rightHiddenPosX;
-    private Dictionary<GameObject, GameObject> inspectionPool = new Dictionary<GameObject, GameObject>();
-    private GameObject spawnedInspectObject;
+    float centerPosX = 0f;
+    float leftHiddenPosX;
+    float rightHiddenPosX;
+    Dictionary<GameObject, GameObject> inspectionPool = new Dictionary<GameObject, GameObject>();
+    GameObject spawnedInspectObject;
 
+    void Awake() => Bootstrapper.InspectController = this;
     void Start()
     {
         openInspect.onClick.AddListener(OpenInspect);
@@ -38,19 +42,26 @@ public class UI_InspectController : MonoBehaviour
         inventoryMenu.anchoredPosition = new Vector2(centerPosX, 0);
         inspectMenu.anchoredPosition = new Vector2(rightHiddenPosX, 0);
         if (inspectCamera != null) inspectCamera.gameObject.SetActive(false);
+        UpdateInspectButtonVisibility();
     }
 
     public void OpenInspect()
     {
-        ItemSettings itemToInspect = radialInventory.GetCurrentFrontItem();
-        if (itemToInspect == null || itemToInspect.ItemData.prefab == null) return;
+        if (Bootstrapper.RadialInventory == null) return;
+
+        ItemSettings itemToInspect = Bootstrapper.RadialInventory.GetCurrentFrontItem();
+        if (itemToInspect == null || itemToInspect.ItemData.Prefab == null) return;
+
+        if (itemNameText != null) itemNameText.text = itemToInspect.ItemData.ItemName;
+            
+        if (itemDescriptionText != null) itemDescriptionText.text = itemToInspect.ItemData.ItemDescription;
 
         inventoryMenu.DOAnchorPosX(leftHiddenPosX, animationDuration).SetEase(animationEase).SetUpdate(true);
         inspectMenu.DOAnchorPosX(centerPosX, animationDuration).SetEase(animationEase).SetUpdate(true);
 
         if (inspectCamera != null) inspectCamera.gameObject.SetActive(true);
 
-        GameObject prefab = itemToInspect.ItemData.prefab;
+        GameObject prefab = itemToInspect.ItemData.Prefab;
 
         if (inspectionPool.TryGetValue(prefab, out GameObject pooledObject))
         {
@@ -62,7 +73,7 @@ public class UI_InspectController : MonoBehaviour
         {
             spawnedInspectObject = Instantiate(prefab, inspectSpawnPoint);
             spawnedInspectObject.transform.localPosition = Vector3.zero;
-            spawnedInspectObject.transform.localScale = Vector3.one * itemToInspect.ItemData.inspectScaleMultiplier;
+            spawnedInspectObject.transform.localScale = Vector3.one * itemToInspect.ItemData.InspectScaleMultiplier;
             
             if (spawnedInspectObject.TryGetComponent(out Rigidbody rb)) rb.isKinematic = true;
             if (spawnedInspectObject.TryGetComponent(out Collider col)) col.enabled = false;
@@ -89,14 +100,23 @@ public class UI_InspectController : MonoBehaviour
         }
         if (inspectCamera != null) inspectCamera.gameObject.SetActive(false);
     }
-    private void SetLayerRecursively(GameObject obj, int newLayer)
+    void SetLayerRecursively(GameObject obj, int newLayer)
     {
         if (obj == null) return;
         
         obj.layer = newLayer;
-        foreach (Transform child in obj.transform)
-        {
-            SetLayerRecursively(child.gameObject, newLayer);
-        }
+        foreach (Transform child in obj.transform) SetLayerRecursively(child.gameObject, newLayer);
+    }
+
+    public void UpdateInspectButtonVisibility()
+    {
+        if (Bootstrapper.RadialInventory == null || openInspect == null) return;
+        ItemSettings currentItem = Bootstrapper.RadialInventory.GetCurrentFrontItem();
+        openInspect.gameObject.SetActive(currentItem != null);
+    }
+
+    void OnDestroy()
+    {
+        if (Bootstrapper.InspectController == this) Bootstrapper.InspectController = null;
     }
 }

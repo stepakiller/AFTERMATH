@@ -2232,6 +2232,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::HotbarManager
   slotCount: 1
   slots: []
+  radialItems: []
 --- !u!4 &739834008
 Transform:
   m_ObjectHideFlags: 0
@@ -2260,15 +2261,17 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PauseController
   pauseScreen: {fileID: 1212452426}
-  ui: {fileID: 709685727}
-  settingsButton: {fileID: 739834011}
   canvasGroup: {fileID: 1212452428}
+  crosshair: {fileID: 0}
+  crosshairCanvasGroup: {fileID: 0}
+  crosshairFadeDuration: 0.2
+  settingsButton: {fileID: 739834011}
+  fadeDuration: 0.25
   globalVolume: {fileID: 1634242838}
+  globalVolumeTargetWeight: 0
   pauseVolume: {fileID: 1910619948}
   blurMaterial: {fileID: 2100000, guid: 13db5e392596e604f888964e4b5b7c58, type: 2}
   targetBlurValue: 2
-  fadeDuration: 0.25
-  globalVolumeTargetWeight: 0
 --- !u!114 &739834011
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7073,12 +7076,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::dfhfh
   audioSource: {fileID: 9175580232499967608}
+  audioClip: {fileID: 0}
   targetMaterial: {fileID: 2100000, guid: 627a2aa5370dcab449299b308c81589d, type: 2}
   playButtonAnimator: {fileID: 7226988052804171682}
   pauseButtonAnimator: {fileID: 6876062216427123188}
   GearsAnimator:
   - {fileID: 6973128099037380673}
   - {fileID: 8970529420931583698}
+  targetDoor: {fileID: 0}
+  canOpenDoor: 0
 --- !u!114 &9175580232499967610
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7091,10 +7097,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fe3875fea049ac344b8d77ce3c607521, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ItemSettings
-  <ItemData>k__BackingField: {fileID: 11400000, guid: 080ed2b8d50dd7d4aaad2074b22dc6a9, type: 2}
-  <HoldPositionOffset>k__BackingField: {x: -0.41, y: -0.31, z: -0.75}
-  <HoldRotationOffset>k__BackingField: {x: -9.08, y: 214.2, z: 0}
-  <HandScale>k__BackingField: 0.5
+  ItemData: {fileID: 0}
+  Rb: {fileID: 0}
+  Col: {fileID: 0}
+  HoldPositionOffset: {x: 0, y: 0, z: 0}
+  HoldRotationOffset: {x: 0, y: 0, z: 0}
+  HandScale: 1
 --- !u!114 &9175580232499967611
 MonoBehaviour:
   m_ObjectHideFlags: 0

@@ -963,6 +963,7 @@ MonoBehaviour:
   actionName: Sprint
   bindingIndex: 0
   controlScheme: KeyboardMouse
+  secondaryActions: []
 --- !u!114 &31706552
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1894,6 +1895,7 @@ MonoBehaviour:
   actionName: Drop
   bindingIndex: 0
   controlScheme: KeyboardMouse
+  secondaryActions: []
 --- !u!114 &72205006
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4684,6 +4686,7 @@ MonoBehaviour:
   actionName: Move
   bindingIndex: 4
   controlScheme: KeyboardMouse
+  secondaryActions: []
 --- !u!114 &273860074
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -5397,6 +5400,7 @@ MonoBehaviour:
   actionName: Jump
   bindingIndex: 0
   controlScheme: KeyboardMouse
+  secondaryActions: []
 --- !u!114 &357406837
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8169,7 +8173,7 @@ MonoBehaviour:
   _fadeDuration: 1
   _cameraDuration: 3
   _animationEase: 7
-  _targetLevelIndex: 3
+  _targetLevelIndex: 2
 --- !u!114 &609166592
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -8759,6 +8763,7 @@ MonoBehaviour:
   actionName: Crouch
   bindingIndex: 0
   controlScheme: KeyboardMouse
+  secondaryActions: []
 --- !u!114 &673901326
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10166,6 +10171,7 @@ MonoBehaviour:
   actionName: Move
   bindingIndex: 2
   controlScheme: KeyboardMouse
+  secondaryActions: []
 --- !u!114 &785017048
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10375,6 +10381,7 @@ MonoBehaviour:
   actionName: Move
   bindingIndex: 1
   controlScheme: KeyboardMouse
+  secondaryActions: []
 --- !u!114 &794807663
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10458,6 +10465,7 @@ MonoBehaviour:
   actionName: DictaphonePlay
   bindingIndex: 0
   controlScheme: KeyboardMouse
+  secondaryActions: []
 --- !u!114 &804798335
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -12447,6 +12455,7 @@ MonoBehaviour:
   actionName: Crouch
   bindingIndex: 0
   controlScheme: KeyboardMouse
+  secondaryActions: []
 --- !u!114 &969239853
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -13181,6 +13190,7 @@ MonoBehaviour:
   actionName: Interact
   bindingIndex: 0
   controlScheme: KeyboardMouse
+  secondaryActions: []
 --- !u!114 &1000557549
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -15118,6 +15128,7 @@ MonoBehaviour:
   actionName: Move
   bindingIndex: 1
   controlScheme: KeyboardMouse
+  secondaryActions: []
 --- !u!114 &1214442102
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -16164,6 +16175,7 @@ MonoBehaviour:
   actionName: Move
   bindingIndex: 3
   controlScheme: KeyboardMouse
+  secondaryActions: []
 --- !u!114 &1363903928
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -16999,6 +17011,7 @@ MonoBehaviour:
   actionName: Move
   bindingIndex: 2
   controlScheme: KeyboardMouse
+  secondaryActions: []
 --- !u!114 &1413340613
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -17134,6 +17147,7 @@ MonoBehaviour:
   actionName: Interact
   bindingIndex: 0
   controlScheme: KeyboardMouse
+  secondaryActions: []
 --- !u!114 &1422562485
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -19133,7 +19147,19 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1547571651}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls: []
+      m_Calls:
+      - m_Target: {fileID: 609166593}
+        m_TargetAssemblyTypeName: SettingsButton, Assembly-CSharp
+        m_MethodName: CloseSettings
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!114 &1547571651
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -20549,6 +20575,7 @@ MonoBehaviour:
   actionName: Jump
   bindingIndex: 0
   controlScheme: KeyboardMouse
+  secondaryActions: []
 --- !u!114 &1673296621
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -22433,6 +22460,7 @@ MonoBehaviour:
   actionName: DictaphonePause
   bindingIndex: 0
   controlScheme: KeyboardMouse
+  secondaryActions: []
 --- !u!114 &1771090683
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -23964,6 +23992,7 @@ MonoBehaviour:
   actionName: Sprint
   bindingIndex: 0
   controlScheme: KeyboardMouse
+  secondaryActions: []
 --- !u!114 &1858468443
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -24412,6 +24441,7 @@ MonoBehaviour:
   actionName: Move
   bindingIndex: 4
   controlScheme: KeyboardMouse
+  secondaryActions: []
 --- !u!114 &1867179037
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -25443,6 +25473,7 @@ MonoBehaviour:
   actionName: Move
   bindingIndex: 3
   controlScheme: KeyboardMouse
+  secondaryActions: []
 --- !u!114 &2002607129
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -26278,6 +26309,7 @@ MonoBehaviour:
   actionName: Drop
   bindingIndex: 0
   controlScheme: KeyboardMouse
+  secondaryActions: []
 --- !u!114 &2057890702
 MonoBehaviour:
   m_ObjectHideFlags: 0

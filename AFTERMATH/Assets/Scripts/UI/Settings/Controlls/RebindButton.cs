@@ -22,9 +22,7 @@ public class RebindButton : MonoBehaviour
     void Start()
     {
         actionToRebind = InputManager.Instance.InputActions.asset.FindAction($"{actionMapName}/{actionName}");
-
         if (actionToRebind == null) return;
-
         UpdateUI(); 
         rebindButton.onClick.AddListener(StartRebinding);
     }
@@ -72,25 +70,11 @@ public class RebindButton : MonoBehaviour
             var secondaryAction = InputManager.Instance.InputActions.asset.FindAction(path);
             if (secondaryAction != null)
             {
-                bool wasUpdated = false;
                 for (int i = 0; i < secondaryAction.bindings.Count; i++)
                 {
                     string bindingGroups = secondaryAction.bindings[i].groups ?? "";
-
-                    // Логика: 
-                    // 1. Либо схема бинда содержит "KeyboardMouse"
-                    // 2. Либо у бинда ВООБЩЕ не указана схема (пустое поле в редакторе)
-                    if (bindingGroups.Contains(controlScheme) || string.IsNullOrEmpty(bindingGroups))
-                    {
-                        secondaryAction.ApplyBindingOverride(i, newPath);
-                        wasUpdated = true;
-                    }
+                    if (bindingGroups.Contains(controlScheme) || string.IsNullOrEmpty(bindingGroups)) secondaryAction.ApplyBindingOverride(i, newPath);
                 }
-
-                if (wasUpdated) 
-                    Debug.Log($"<color=green>[Успех]</color> {path} синхронизирован на {newPath}");
-                else 
-                    Debug.LogWarning($"[Внимание] {path} найден, но подходящих биндов не обнаружено.");
             }
         }
     }

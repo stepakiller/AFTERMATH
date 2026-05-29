@@ -2,31 +2,53 @@ using UnityEngine;
 using DG.Tweening;
 public class Door : MonoBehaviour, Interactable
 {
+    [SerializeField] AudioSource audioSource;
+    [SerializeField] AudioClip openSound;
+    [SerializeField] AudioClip closeSound;
     [SerializeField] float openAngle = 90f;
     [SerializeField] float duration = 0.8f;
     [SerializeField] Ease moveEase = Ease.OutQuad;
-
+    [SerializeField] bool doorLock;
+    [SerializeField] ObjectMover objectMover;
+    [SerializeField] bool startOpen = false;
     bool isOpen = false;
     Vector3 defaultRotation;
     Transform doorTransform;
+    bool objectIsMove = false;
 
     void Start()
     {
         doorTransform = transform;
         defaultRotation = doorTransform.localEulerAngles;
+        if(startOpen) OpenDoor();
     }
 
     public void Interact()
     {
         if (DOTween.IsTweening(doorTransform)) return;
 
-        if (!isOpen)OpenDoor();
-        else CloseDoor();
+        if (!isOpen & !doorLock) OpenDoor();
+        else if(isOpen & !doorLock) CloseDoor();
+        else
+        {
+            if(!objectIsMove)
+            {
+                objectMover.MoveObjectRelativeX();
+                objectIsMove = true;
+            }
+        }
     }
 
-    void OpenDoor()
+    public void OpenDoor()
     {
+        doorLock = false;
         Transform player = Bootstrapper.PlayerTransform;
+        if (player == null)
+        {
+            return; 
+        }
+        audioSource.clip = openSound;
+        audioSource.Play();
         Vector3 directionToPlayer = player.position - doorTransform.position;
         directionToPlayer.y = 0; 
         float dot = Vector3.Dot(doorTransform.forward, directionToPlayer.normalized);
@@ -39,7 +61,15 @@ public class Door : MonoBehaviour, Interactable
 
     void CloseDoor()
     {
+        audioSource.clip = closeSound;
+        audioSource.Play();
         doorTransform.DOLocalRotate(defaultRotation, duration).SetEase(moveEase);
         isOpen = false;
+    }
+
+    public void CloseDoor2()
+    {
+        doorLock = true;
+        CloseDoor();
     }
 }

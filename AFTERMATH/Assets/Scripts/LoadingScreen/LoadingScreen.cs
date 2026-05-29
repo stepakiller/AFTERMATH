@@ -25,36 +25,45 @@ public class LoadingScreen : MonoBehaviour
 
     void Start()
     {
-        pressAnyKeyText.color = new Color(pressAnyKeyText.color.r, pressAnyKeyText.color.g, pressAnyKeyText.color.b, 0f);
-        
+        pressAnyKeyText.alpha = 0f;
         pressAnyKeyText.gameObject.SetActive(false);
         
         progressBarFill.fillAmount = 0f; 
+        progressText.text = "0%";
+        
         blackScreen.alpha = 1f;
         loadingUIGroup.alpha = 0f; 
 
         InputManager.Instance.EnableUIInput();
-        System.GC.Collect(); 
         
         StartCoroutine(LoadLevelSequence());
     }
 
     void OnEnable() => _anyButtonListener = InputSystem.onAnyButtonPress.Call(OnAnyButtonPressed);
-    void OnDisable() => _anyButtonListener?.Dispose();
+    
+    void OnDisable()
+    {
+        _anyButtonListener?.Dispose();
+        pressAnyKeyText.DOKill(); 
+    }
 
     private void OnAnyButtonPressed(InputControl control)
     {
-        if (!_readyToActivate) return;
+        if (!_readyToActivate || _isTransitioning) return;
         HandleSubmit();
     }
 
-    void HandleSubmit() => _readyToActivate = true;
+    void HandleSubmit() 
+    {
+        _isTransitioning = true;
+        _anyButtonListener?.Dispose(); 
+        _anyButtonListener = null;
+    }
 
     IEnumerator LoadLevelSequence()
     {
         AsyncOperation operation = SceneManager.LoadSceneAsync(sceneToLoadIndex);
         operation.allowSceneActivation = false;
-
         yield return blackScreen.DOFade(0f, fadeDuration).WaitForCompletion();
         yield return loadingUIGroup.DOFade(1f, fadeDuration).WaitForCompletion();
 
@@ -80,8 +89,12 @@ public class LoadingScreen : MonoBehaviour
                 {
                     _readyToActivate = true; 
                     pressAnyKeyText.gameObject.SetActive(true);
+                    
                     float tweenDuration = 1f / pulseSpeed;
-                    pressAnyKeyText.DOFade(1f, tweenDuration).SetLoops(-1, LoopType.Yoyo).SetEase(Ease.InOutSine).SetUpdate(true);
+                    pressAnyKeyText.DOFade(1f, tweenDuration)
+                        .SetLoops(-1, LoopType.Yoyo)
+                        .SetEase(Ease.InOutSine)
+                        .SetUpdate(true);
                 }
 
                 if (_readyToActivate && _isTransitioning) 

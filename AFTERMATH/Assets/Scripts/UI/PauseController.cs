@@ -15,7 +15,7 @@ public class PauseController : MonoBehaviour
 
     [Header("Settings")]
     [SerializeField] SettingsButton settingsButton;
-    [SerializeField] float fadeDuration = 0.3f;
+    [SerializeField] float fadeDuration = 0.25f;
 
     [Header("Volumes & Effects")]
     [SerializeField] Volume globalVolume;
@@ -24,7 +24,7 @@ public class PauseController : MonoBehaviour
     [SerializeField] Material blurMaterial;
     [SerializeField] float targetBlurValue = 2f;
     readonly int blurPropertyId = Shader.PropertyToID("_Blur");
-
+    public bool IsPauseBlocked { get; set; } = false;
     void Awake()
     {
         if (canvasGroup == null) canvasGroup = GetComponent<CanvasGroup>();
@@ -33,7 +33,7 @@ public class PauseController : MonoBehaviour
 
     void Start()
     {
-        InputManager.Instance.OnPausePressed += PauseGame;
+        InputManager.Instance.OnPausePressed += TryPauseGame;
         InputManager.Instance.OnUnpausePressed += ResumeGame;
     }
 
@@ -41,7 +41,7 @@ public class PauseController : MonoBehaviour
     {
         if (InputManager.Instance != null)
         {
-            InputManager.Instance.OnPausePressed -= PauseGame;
+            InputManager.Instance.OnPausePressed -= TryPauseGame;
             InputManager.Instance.OnUnpausePressed -= ResumeGame;
         }
     }
@@ -58,6 +58,11 @@ public class PauseController : MonoBehaviour
         if (blurMaterial != null) blurMaterial.SetFloat(blurPropertyId, 0f);
     }
 
+    void TryPauseGame()
+    {
+        if(IsPauseBlocked) return;
+        PauseGame();
+    }
     void PauseGame()
     {
         KillAllTweens();
@@ -100,13 +105,13 @@ public class PauseController : MonoBehaviour
         {
             pauseScreen.SetActive(false); 
             Time.timeScale = 1f;            
-            crosshair.SetActive(true);
-            if (crosshairCanvasGroup != null)
-            {
-                crosshairCanvasGroup.alpha = 0f;
-                crosshairCanvasGroup.DOFade(1f, crosshairFadeDuration); 
-            }
         });
+        crosshair.SetActive(true);
+        if (crosshairCanvasGroup != null)
+        {
+            crosshairCanvasGroup.alpha = 0f;
+            crosshairCanvasGroup.DOFade(1f, crosshairFadeDuration); 
+        }
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
         InputManager.Instance.EnablePlayerInput();

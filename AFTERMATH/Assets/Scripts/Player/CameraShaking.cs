@@ -18,6 +18,7 @@ public class CameraShaking : MonoBehaviour
     [SerializeField] float landEntrySpeed = 15f;   
     [SerializeField] float landReturnSpeed = 5f;   
 
+    [Header("Ссылки")]
     [SerializeField] CharacterController controller;
 
     float defaultPosY = 0;
@@ -30,17 +31,19 @@ public class CameraShaking : MonoBehaviour
     Vector3 lastPosition;
     bool wasTimeFrozen;
 
-    void Start()
+     void Start()
     {
         defaultPosY = transform.localPosition.y;
         targetPos = transform.localPosition;
         targetRot = transform.localRotation;
         wasGrounded = true;
-        lastPosition = controller.transform.position;
+        if (controller != null) lastPosition = controller.transform.position;
     }
 
     void LateUpdate()
     {
+        if (controller == null) return;
+
         float dt = Time.deltaTime;
         if (Time.timeScale <= 0f || dt <= 0f)
         {
@@ -55,31 +58,32 @@ public class CameraShaking : MonoBehaviour
             targetLandOffset = 0f;
             currentLandOffset = 0f;
             lastPosition = controller.transform.position;
-            HandleBobbing();
+            HandleBobbing(dt);
             return;
         }
 
-        HandleLanding();
-        HandleBobbing();
+        HandleLanding(dt);
+        HandleBobbing(dt);
     }
 
-    void HandleLanding()
+    void HandleLanding(float dt)
     {
-        float dt = Time.deltaTime;
-        if (!wasGrounded && controller.isGrounded && dt > 1e-5f) targetLandOffset = landDipAmount;
+        if (!wasGrounded && controller.isGrounded && dt > 1e-5f) 
+            targetLandOffset = landDipAmount;
+            
         wasGrounded = controller.isGrounded;
 
         if (targetLandOffset > 0)
         {
             currentLandOffset = Mathf.Lerp(currentLandOffset, targetLandOffset, dt * landEntrySpeed);
-            if (Mathf.Abs(currentLandOffset - targetLandOffset) < 0.05f) targetLandOffset = 0;
+            if (Mathf.Abs(currentLandOffset - targetLandOffset) < 0.05f) 
+                targetLandOffset = 0;
         }
         else currentLandOffset = Mathf.Lerp(currentLandOffset, 0, dt * landReturnSpeed);
     }
 
-    void HandleBobbing()
+    void HandleBobbing(float dt)
     {
-        float dt = Time.deltaTime;
         if (dt <= 0f) return;
 
         float targetPosX = 0;
@@ -98,17 +102,17 @@ public class CameraShaking : MonoBehaviour
         {
             float waveSpeed = walkingBobbingSpeed;
             float waveAmount = bobbingAmount;
-
             float rotMultX = bobbingRotX;
             float rotMultY = bobbingRotY;
 
-            if (Input.GetKey(KeyCode.LeftShift))
+            if (InputManager.Instance != null && InputManager.Instance.IsSprinting)
             {
                 waveSpeed *= 1.3f;
                 waveAmount *= runningBobbingFactor;
                 rotMultX *= runningRotFactor;
                 rotMultY *= runningRotFactor;
             }
+            
             timer += dt * waveSpeed;
             targetPosX = Mathf.Cos(timer / 2) * waveAmount;
             targetPosY = defaultPosY + Mathf.Sin(timer) * waveAmount;
@@ -123,9 +127,11 @@ public class CameraShaking : MonoBehaviour
             targetRotX = 0;
             targetRotY = 0;
         }
+        
         Vector3 bobbingPos = new Vector3(targetPosX, targetPosY, 0);
         targetPos = Vector3.Lerp(targetPos, bobbingPos, dt * transitionSpeed);
         transform.localPosition = new Vector3(targetPos.x, targetPos.y - currentLandOffset, targetPos.z);
+        
         Quaternion bobbingRot = Quaternion.Euler(targetRotX, targetRotY, 0);
         targetRot = Quaternion.Slerp(targetRot, bobbingRot, dt * transitionSpeed);
         transform.localRotation = targetRot;

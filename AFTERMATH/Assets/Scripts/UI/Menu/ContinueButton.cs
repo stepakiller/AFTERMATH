@@ -9,6 +9,10 @@ public class ContinueButton : MonoBehaviour
     [SerializeField] float _cameraDuration;
     [SerializeField] Ease _animationEase = Ease.InOutQuad;
     [SerializeField] int _targetLevelIndex;
+    void Start()
+    {
+        Time.timeScale = 1f;
+    }
     public void StartGame()
     {
         _canvasGroup.interactable = false;

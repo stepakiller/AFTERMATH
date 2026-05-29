@@ -2,12 +2,11 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-// БРОНЕЖИЛЕТ №1: Заставляем Unity гарантировать наличие этих компонентов
 [RequireComponent(typeof(Image), typeof(CanvasGroup))]
 public class UI_DraggableItem : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
-    public int slotIndex;
-    public ItemContainer containerType;
+    [field: SerializeField] public int SlotIndex { get; set; }
+    [field: SerializeField] public ItemContainer ContainerType { get; set; }
     
     Transform originalParent;
     Image image;
@@ -20,7 +19,6 @@ public class UI_DraggableItem : MonoBehaviour, IBeginDragHandler, IDragHandler, 
         InitComponents();
     }
 
-    // БРОНЕЖИЛЕТ №2: Выносим поиск компонентов в отдельный метод
     void InitComponents()
     {
         if (image == null) image = GetComponent<Image>();
@@ -36,14 +34,12 @@ public class UI_DraggableItem : MonoBehaviour, IBeginDragHandler, IDragHandler, 
 
     public void Setup(ItemData item, int index)
     {
-        // Вызываем инициализацию ПЕРЕД настройкой. 
-        // Если Awake не успел сработать (префаб был выключен), мы найдем всё прямо сейчас.
         InitComponents(); 
 
-        slotIndex = index;
+        SlotIndex = index;
         if (item != null)
         {
-            image.sprite = item.icon;
+            image.sprite = item.Icon;
             canvasGroup.alpha = 1f;
             canvasGroup.blocksRaycasts = true;
         }
@@ -82,15 +78,10 @@ public class UI_DraggableItem : MonoBehaviour, IBeginDragHandler, IDragHandler, 
 
     public void OnEndDrag(PointerEventData eventData)
     {
-        // Возвращаем в родной слот
         transform.SetParent(originalParent, false); 
-        
-        // Мягко возвращаем точно в центр слота, НЕ меняя ширину и высоту
         rectTransform.localPosition = Vector3.zero; 
         rectTransform.anchoredPosition = Vector2.zero; 
         transform.localScale = Vector3.one;
-        
-        // Снова делаем кликабельным
         canvasGroup.blocksRaycasts = true;
     }
 }
